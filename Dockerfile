@@ -60,7 +60,7 @@ RUN cat << 'SSEOF' > /start.sh
 # Starts up MariaDB within the container.
 # Stop on error
 	set -e
-	DATADIR="/data/mysql"
+	DATADIR=\"/data/mysql\"
 	/etc/init.d/mysql stop
 # test if DATADIR has content
 	if [ ! "$(ls -A $DATADIR)" ]; then
@@ -77,7 +77,7 @@ chown root $DATADIR/debian*.flag
 echo "Setting password for the "debian-sys-maint"@"localhost" user"
 /etc/init.d/mysql start
 sleep 1
-DB_MAINT_PASS=$(cat /etc/mysql/debian.cnf |grep -m 1 "password\s*=\s*"| sed "s/^password\s*=\s*//")
+DB_MAINT_PASS=$(cat /etc/mysql/debian.cnf |grep -m 1 \"password\s*=\s*\| sed \"s/^password\s*=\s*//\")
 mysql -u root -e \
   "GRANT ALL PRIVILEGES ON *.* TO "debian-sys-maint"@"localhost" IDENTIFIED BY "$DB_MAINT_PASS";"
 # Create the superuser named "docker".
