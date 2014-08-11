@@ -30,7 +30,7 @@ MAINTAINER Martin Gondermann magicmonty@pagansoft.de
 # Set noninteractive mode for apt-get
 ENV DEBIAN_FRONTEND noninteractive
 
-RUN echo "deb http://archive.ubuntu.com/ubuntu precise main universe" > /etc/apt/sources.list && \
+RUN echo "# deb http://archive.ubuntu.com/ubuntu trusty main universe" > /etc/apt/sources.list && \
 	apt-get update && \
 	apt-get upgrade -y && \
 	apt-get -y -q install wget logrotate
