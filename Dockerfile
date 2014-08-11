@@ -55,7 +55,7 @@ RUN sed -i -e 's/^datadir\s*=.*/datadir = \/data\/mysql/' /etc/mysql/my.cnf
 RUN sed -i -e 's/^bind-address/#bind-address/' /etc/mysql/my.cnf
 EXPOSE 3306
 #ADD site-db/start.sh /start.sh
-ENV START_SH << SSEOF
+RUN START_SH='<< SSEOF
 #!/bin/bash
 # Starts up MariaDB within the container.
 # Stop on error
@@ -71,18 +71,18 @@ ENV START_SH << SSEOF
 # Ensure mysql owns the DATADIR
 chown -R mysql $DATADIR
 chown root $DATADIR/debian*.flag
-# The password for 'debian-sys-maint'@'localhost' is auto generated.
+# The password for "debian-sys-maint"@"localhost" is auto generated.
 # The database inside of DATADIR may not have been generated with this password.
 # So, we need to set this for our database to be portable.
-echo "Setting password for the 'debian-sys-maint'@'localhost' user"
+echo "Setting password for the "debian-sys-maint"@"localhost" user"
 /etc/init.d/mysql start
 sleep 1
-DB_MAINT_PASS=$(cat /etc/mysql/debian.cnf |grep -m 1 "password\s*=\s*"| sed 's/^password\s*=\s*//')
+DB_MAINT_PASS=$(cat /etc/mysql/debian.cnf |grep -m 1 "password\s*=\s*"| sed "s/^password\s*=\s*//")
 mysql -u root -e \
-  "GRANT ALL PRIVILEGES ON *.* TO 'debian-sys-maint'@'localhost' IDENTIFIED BY '$DB_MAINT_PASS';"
-# Create the superuser named 'docker'.
+  "GRANT ALL PRIVILEGES ON *.* TO "debian-sys-maint"@"localhost" IDENTIFIED BY "$DB_MAINT_PASS";"
+# Create the superuser named "docker".
 mysql -u root -e \
-  "DELETE FROM mysql.user WHERE user='docker'; CREATE USER 'docker'@'localhost' IDENTIFIED BY 'docker'; GRANT ALL PRIVILEGES ON *.* TO 'docker'@'localhost' WITH GRANT OPTION; CREATE USER 'docker'@'%' IDENTIFIED BY 'docker'; GRANT ALL PRIVILEGES ON *.* TO 'docker'@'%' WITH GRANT OPTION;" && \
+  "DELETE FROM mysql.user WHERE user="docker"; CREATE USER "docker"@"localhost" IDENTIFIED BY "docker"; GRANT ALL PRIVILEGES ON *.* TO 'docker'@'localhost' WITH GRANT OPTION; CREATE USER "docker""@"%" IDENTIFIED BY "docker"; GRANT ALL PRIVILEGES ON *.* TO "docker""@"%" WITH GRANT OPTION;" && \
   /etc/init.d/mysql stop
 SSEOF
 RUN cat $STARTSH > start.sh
@@ -110,6 +110,8 @@ RUN cat << SEOF > /start.sh
 chown -R www-data:www-data /data/www
 supervisord -n
 SEOF
+' && \
+cat $START_SH > /start.sh
 
 RUN cat << EOF > /etc/supervisord.conf
 # /etc/supervisord.conf
