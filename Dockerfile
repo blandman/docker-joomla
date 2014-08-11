@@ -42,7 +42,7 @@ ENV LANG en_US.UTF-8
 ENV LC_ALL en_US.UTF-8
 
 # Install MariaDB from repository.
-RUN	apt-get update-y  && \
+RUN	apt-get update -y  && \
 	apt-get install -y mariadb-server
 
 # Decouple our data from our container.
