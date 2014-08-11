@@ -1,8 +1,30 @@
+#!/bin/bash
+#######
+# Direkt SPEED / Frank Lemanschik / B8G Datentechnik
+# In File Docker Build executor hook Open Virtual Machine Formart! ovmf executor
+# !!!!!!! IMPORTENT TECHNOLOGY SPEARD THE WORD !!!!!!!!!!!!!!!!!!
+######
+
+## This works becaus docker ignores 
+#not known commands ;) and bash only gives some errors
+##
+
+#docker build -t data-store data-store && \
+#docker build -t site-db site-db && \
+#docker build -t web-machine web-machine
+#REPOS=$(docker ps -notrunc -a -q)
+#echo Removing
+#echo $REPOS
+#echo ---
+#docker rm `docker ps -notrunc -a -q` > /dev/null 2>&1
+#docker ps -a
+
+docker build -t data-store - << DATASTORE
 ######## data-store
 FROM ubuntu:14.04
 MAINTAINER Frank Lemanschik <frank@dspeed.eu>
 # OLD MAINTAINER Martin Gondermann magicmonty@pagansoft.de
-
+ENV DOCKER_RUN docker run -name my-data-store data-store true
 RUN DEBIAN_FRONTEND="noninteractive" && \
 	echo "deb http://archive.ubuntu.com/ubuntu trusty main universe" >> /etc/apt/sources.list && \
 	apt-get update && \
@@ -22,11 +44,13 @@ RUN curl -G -o /data/joomla.zip http://joomlacode.org/gf/download/frsrelease/192
 VOLUME ["/data"]
 
 CMD /bin/sh
+DATASTORE
 
+docker build -t site-db - << SITEDB
 # MariaDB (https://mariadb.org/)
 FROM ubuntu:14.04
 MAINTAINER Martin Gondermann magicmonty@pagansoft.de
-
+ENV DOCKER_RUN docker run -d -volumes-from my-data-store -name my-site-db site-db
 # Set noninteractive mode for apt-get
 ENV DEBIAN_FRONTEND noninteractive
 
@@ -105,7 +129,12 @@ mysql -u root -e \
 EOF
 RUN chmod +x /start.sh
 ENTRYPOINT ["/start.sh"]
+SITEDB
 
+
+
+
+docker build -t web-machine - << WEB
 FROM ubuntu:precise
 MAINTAINER magicmonty@pagansoft.de
 
@@ -183,7 +212,27 @@ ENV DOCKER_RUN "docker run -d -name my-web-machine -p 80:80 -p 9000:22 -link my-
 VOLUME ["/data"]
 
 # Add site to apache
-ADD ./joomla /etc/apache2/sites-available/
+RUN cat << EOF > /etc/apache2/sites-available/joomla
+<VirtualHost *:80>
+ServerAdmin webmaster@localhost
+DocumentRoot /data/www
+<Directory />
+Options FollowSymLinks
+AllowOverride None
+</Directory>
+<Directory /data/www/>
+Options Indexes FollowSymLinks MultiViews
+AllowOverride None
+Order allow,deny
+allow from all
+</Directory>
+ErrorLog ${APACHE_LOG_DIR}/error.log
+# Possible values include: debug, info, notice, warn, error, crit,
+# alert, emerg.
+LogLevel warn
+CustomLog ${APACHE_LOG_DIR}/access.log combined
+</VirtualHost>
+EOF
 RUN a2ensite joomla
 RUN a2dissite 000-default
 
@@ -195,3 +244,4 @@ EXPOSE 80
 EXPOSE 22
 
 CMD ["/bin/bash", "/start.sh"]
+WEB
