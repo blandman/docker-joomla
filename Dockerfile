@@ -55,20 +55,19 @@ RUN sed -i -e 's/^datadir\s*=.*/datadir = \/data\/mysql/' /etc/mysql/my.cnf
 RUN sed -i -e 's/^bind-address/#bind-address/' /etc/mysql/my.cnf
 EXPOSE 3306
 #ADD site-db/start.sh /start.sh
-RUN cat << SSEOF > "/start.sh"
+RUN cat <<-SSEOF > /start.sh
 #!/bin/bash
 # Starts up MariaDB within the container.
 # Stop on error
-set -e
-DATADIR="/data/mysql"
-/etc/init.d/mysql stop
-
+	set -e
+	DATADIR="/data/mysql"
+	/etc/init.d/mysql stop
 # test if DATADIR has content
-if [ ! "$(ls -A $DATADIR)" ]; then
-  echo "Initializing MariaDB at $DATADIR"
-  # Copy the data that we generated within the container to the empty DATADIR.
-  cp -R /var/lib/mysql/* $DATADIR
-fi
+	if [ ! "$(ls -A $DATADIR)" ]; then
+  		echo "Initializing MariaDB at $DATADIR"
+  		# Copy the data that we generated within the container to the empty DATADIR.
+  		cp -R /var/lib/mysql/* $DATADIR
+	fi
 # Ensure mysql owns the DATADIR
 chown -R mysql $DATADIR
 chown root $DATADIR/debian*.flag
