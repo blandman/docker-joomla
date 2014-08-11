@@ -55,7 +55,34 @@ RUN sed -i -e 's/^datadir\s*=.*/datadir = \/data\/mysql/' /etc/mysql/my.cnf
 RUN sed -i -e 's/^bind-address/#bind-address/' /etc/mysql/my.cnf
 EXPOSE 3306
 #ADD site-db/start.sh /start.sh
-RUN cat <<-"SSEOF" > ./start.sh \
+RUN echo '#!/bin/bash \n\
+# Starts up MariaDB within the container. \n\
+# Stop on error \n\
+	set -e \n\
+	DATADIR=/data/mysql \n\
+	/etc/init.d/mysql stop \n\
+# test if DATADIR has content \n\
+	if [ ! '$(ls -A $DATADIR)' ]; then \n\
+  		echo "Initializing MariaDB at $DATADIR" \n\
+  		# Copy the data that we generated within the container to the empty DATADIR. \n\
+  		cp -R /var/lib/mysql/* $DATADIR \n\
+	fi \n\
+# Ensure mysql owns the DATADIR \n\
+chown -R mysql $DATADIR \n\
+chown root $DATADIR/debian*.flag \n\
+# The password for "debian-sys-maint"@"localhost" is auto generated. \n\
+# The database inside of DATADIR may not have been generated with this password. \n\
+# So, we need to set this for our database to be portable. \n\
+echo "Setting password for the "debian-sys-maint"@"localhost" user" \n\
+/etc/init.d/mysql start \n\
+sleep 1 \n\
+DB_MAINT_PASS=$(cat /etc/mysql/debian.cnf |grep -m 1 \"password\s*=\s*\| sed \"s/^password\s*=\s*//\") \n\
+mysql -u root -e \ \n\
+  "GRANT ALL PRIVILEGES ON *.* TO "debian-sys-maint"@"localhost" IDENTIFIED BY "$DB_MAINT_PASS";" \n\
+' > start.sh
+
+
+RUN cat <<-"SSEOF" > /start.sh \
 #!/bin/bash 
 # Starts up MariaDB within the container.
 # Stop on error
