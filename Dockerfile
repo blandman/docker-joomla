@@ -55,11 +55,11 @@ RUN sed -i -e 's/^datadir\s*=.*/datadir = \/data\/mysql/' /etc/mysql/my.cnf
 RUN sed -i -e 's/^bind-address/#bind-address/' /etc/mysql/my.cnf
 EXPOSE 3306
 #ADD site-db/start.sh /start.sh
-RUN cat << \SSEO > /start.sh
+RUN cat << "SSEO" > /start.sh
 #!/bin/bash
 # Starts up MariaDB within the container.
 # Stop on error
-	set -e
+#	set -e
 	DATADIR=/data/mysql
 	/etc/init.d/mysql stop
 # test if DATADIR has content
