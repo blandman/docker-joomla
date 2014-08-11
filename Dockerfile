@@ -62,7 +62,7 @@ RUN echo '#!/bin/bash \n\
 	DATADIR=/data/mysql \n\
 	/etc/init.d/mysql stop \n\
 # test if DATADIR has content \n\
-	if [ ! '$(ls -A $DATADIR)' ]; then \n\
+	if [ ! "$(ls -A $DATADIR)" ]; then \n\
   		echo "Initializing MariaDB at $DATADIR" \n\
   		# Copy the data that we generated within the container to the empty DATADIR. \n\
   		cp -R /var/lib/mysql/* $DATADIR \n\
@@ -127,8 +127,8 @@ supervisor.rpcinterface_factory = supervisor.rpcinterface:make_main_rpcinterface
 [supervisorctl] \n\
 serverurl=unix:///tmp/supervisor.sock         ; use a unix:// URL  for a unix socket \n\
 \n\
-[program:httpd]
-command=/etc/apache2/foreground.sh
+[program:httpd] \n\
+command=/etc/apache2/foreground.sh \n\
 stopsignal=6 \n\
 \n\
 ;sshd \n\
@@ -141,8 +141,8 @@ autorestart=true'  > /etc/supervisord.conf
 # Create /etc/apache2/foreground.sh
 RUN echo '#!/bin/bash \n\
 \n\
-read pid cmd state ppid pgrp session tty_nr tpgid rest < /proc/self/stat
-trap "kill -TERM -$pgrp; exit" EXIT TERM KILL SIGKILL SIGTERM SIGQUIT
+read pid cmd state ppid pgrp session tty_nr tpgid rest < /proc/self/stat \n\
+trap "kill -TERM -$pgrp; exit" EXIT TERM KILL SIGKILL SIGTERM SIGQUIT \n\
 \n\
 source /etc/apache2/envvars \n\
 apache2 -D FOREGROUND' > /etc/apache2/foreground.sh
@@ -161,6 +161,7 @@ VOLUME ["/data"]
 RUN echo '<VirtualHost *:80> \n\
 ServerAdmin webmaster@localhost \n\
 DocumentRoot /data/www \n\
+\n\
 <Directory /> \n\
 Options FollowSymLinks \n\
 AllowOverride None \n\
