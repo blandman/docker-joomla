@@ -79,41 +79,11 @@ sleep 1 \n\
 DB_MAINT_PASS=$(cat /etc/mysql/debian.cnf |grep -m 1 \"password\s*=\s*\| sed \"s/^password\s*=\s*//\") \n\
 mysql -u root -e \ \n\
   "GRANT ALL PRIVILEGES ON *.* TO "debian-sys-maint"@"localhost" IDENTIFIED BY "$DB_MAINT_PASS";" \n\
-' > /start.sh && cat /start.sh
-
-
-RUN cat <<-"SSEOF" > /start.sh \
-#!/bin/bash 
-# Starts up MariaDB within the container.
-# Stop on error
-	set -e \
-	DATADIR=/data/mysql && \
-	/etc/init.d/mysql stop
-# test if DATADIR has content
-	if [ ! '$(ls -A $DATADIR)' ]; then 
-  		echo "Initializing MariaDB at $DATADIR"
-  		# Copy the data that we generated within the container to the empty DATADIR.
-  		cp -R /var/lib/mysql/* $DATADIR
-	fi
-# Ensure mysql owns the DATADIR
-chown -R mysql $DATADIR
-chown root $DATADIR/debian*.flag
-# The password for "debian-sys-maint"@"localhost" is auto generated.
-# The database inside of DATADIR may not have been generated with this password.
-# So, we need to set this for our database to be portable.
-echo "Setting password for the "debian-sys-maint"@"localhost" user"
-/etc/init.d/mysql start
-sleep 1
-DB_MAINT_PASS=$(cat /etc/mysql/debian.cnf |grep -m 1 \"password\s*=\s*\| sed \"s/^password\s*=\s*//\")
-mysql -u root -e \
-  "GRANT ALL PRIVILEGES ON *.* TO "debian-sys-maint"@"localhost" IDENTIFIED BY "$DB_MAINT_PASS";"
 # Create the superuser named "docker".
 mysql -u root -e \
   "DELETE FROM mysql.user WHERE user="docker"; CREATE USER "docker"@"localhost" IDENTIFIED BY "docker"; GRANT ALL PRIVILEGES ON *.* TO 'docker'@'localhost' WITH GRANT OPTION; CREATE USER "docker""@"%" IDENTIFIED BY "docker"; GRANT ALL PRIVILEGES ON *.* TO "docker""@"%" WITH GRANT OPTION;" && \
-  /etc/init.d/mysql stop
-SSEOF
-#&& cat $(START_SH) > start.sh
-
+/etc/init.d/mysql stop
+' > /start.sh && cat /start.sh
 RUN chmod +x /start.sh
 ENTRYPOINT ["/start.sh"]
 
@@ -131,60 +101,52 @@ RUN echo "deb http://archive.ubuntu.com/ubuntu precise main universe" > /etc/apt
 RUN easy_install supervisor
 
 # Create! --Add-- all config and start files
-RUN cat << SEOF > /start.sh
-#!/bin/bash
-# Alternate method change user id of www-data to match file owner!
-chown -R www-data:www-data /data/www
-supervisord -n
-SEOF
-#' && \
-#cat $START_SH > /start.sh
+RUN echo '#!/bin/bash \n\
+# Alternate method change user id of www-data to match file owner! \n\
+chown -R www-data:www-data /data/www \n\
+supervisord -n' > /start.sh 
 
-RUN cat << EOF > /etc/supervisord.conf
-# /etc/supervisord.conf
-[unix_http_server]
-file=/tmp/supervisor.sock                       ; path to your socket file
-
-[supervisord]
-logfile=/var/log/supervisord/supervisord.log    ; supervisord log file
-logfile_maxbytes=50MB                           ; maximum size of logfile before rotation
-logfile_backups=10                              ; number of backed up logfiles
-loglevel=error                                  ; info, debug, warn, trace
-pidfile=/var/run/supervisord.pid                ; pidfile location
-nodaemon=false                                  ; run supervisord as a daemon
-minfds=1024                                     ; number of startup file descriptors
-minprocs=200                                    ; number of process descriptors
-user=root                                       ; default user
-childlogdir=/var/log/supervisord/               ; where child log files will live
-
-[rpcinterface:supervisor]
-supervisor.rpcinterface_factory = supervisor.rpcinterface:make_main_rpcinterface
-
-[supervisorctl]
-serverurl=unix:///tmp/supervisor.sock         ; use a unix:// URL  for a unix socket
-
+RUN echo '# /etc/supervisord.conf \n\
+[unix_http_server] \n\
+file=/tmp/supervisor.sock                       ; path to your socket file \n\
+\n\
+[supervisord] \n\
+logfile=/var/log/supervisord/supervisord.log    ; supervisord log file \n\
+logfile_maxbytes=50MB                           ; maximum size of logfile before rotation \n\
+logfile_backups=10                              ; number of backed up logfiles \n\
+loglevel=error                                  ; info, debug, warn, trace \n\
+pidfile=/var/run/supervisord.pid                ; pidfile location \n\
+nodaemon=false                                  ; run supervisord as a daemon \n\
+minfds=1024                                     ; number of startup file descriptors \n\
+minprocs=200                                    ; number of process descriptors \n\
+user=root                                       ; default user \n\
+childlogdir=/var/log/supervisord/               ; where child log files will live \n\
+\n\
+[rpcinterface:supervisor] \n\
+supervisor.rpcinterface_factory = supervisor.rpcinterface:make_main_rpcinterface \n\
+\n\
+[supervisorctl] \n\
+serverurl=unix:///tmp/supervisor.sock         ; use a unix:// URL  for a unix socket \n\
+\n\
 [program:httpd]
 command=/etc/apache2/foreground.sh
-stopsignal=6
+stopsignal=6 \n\
+\n\
+;sshd \n\
+[program:sshd] \n\
+command=/usr/sbin/sshd -D \n\
+stdout_logfile=/var/log/supervisord/%(program_name)s.log \n\
+stderr_logfile=/var/log/supervisord/%(program_name)s.log \n\
+autorestart=true'  > /etc/supervisord.conf
 
-;sshd
-[program:sshd]
-command=/usr/sbin/sshd -D
-stdout_logfile=/var/log/supervisord/%(program_name)s.log
-stderr_logfile=/var/log/supervisord/%(program_name)s.log
-autorestart=true
-EOF
-
-RUN cat << EOF > /etc/apache2/foreground.sh
-#!/bin/bash
-
+# Create /etc/apache2/foreground.sh
+RUN echo '#!/bin/bash \n\
+\n\
 read pid cmd state ppid pgrp session tty_nr tpgid rest < /proc/self/stat
 trap "kill -TERM -$pgrp; exit" EXIT TERM KILL SIGKILL SIGTERM SIGQUIT
-
-source /etc/apache2/envvars
-apache2 -D FOREGROUND
-EOF
-
+\n\
+source /etc/apache2/envvars \n\
+apache2 -D FOREGROUND' > /etc/apache2/foreground.sh
 RUN mkdir -p /var/log/supervisord /var/run/sshd
 RUN chmod 755 /start.sh && chmod 755 /etc/apache2/foreground.sh
 
@@ -196,7 +158,26 @@ ENV DOCKER_RUN "docker run -d -name my-web-machine -p 80:80 -p 9000:22 -link my-
 VOLUME ["/data"]
 
 # Add site to apache
-ADD ./joomla /etc/apache2/sites-available/
+# ADD ./joomla /etc/apache2/sites-available/
+RUN echo '<VirtualHost *:80> \n\
+ServerAdmin webmaster@localhost \n\
+DocumentRoot /data/www \n\
+<Directory /> \n\
+Options FollowSymLinks \n\
+AllowOverride None \n\
+</Directory> \n\
+<Directory /data/www/> \n\
+Options Indexes FollowSymLinks MultiViews \n\
+AllowOverride None \n\
+Order allow,deny \n\
+allow from all \n\
+</Directory> \n\
+ErrorLog ${APACHE_LOG_DIR}/error.log \n\
+# Possible values include: debug, info, notice, warn, error, crit, \n\
+# alert, emerg. \n\
+LogLevel warn \n\
+CustomLog ${APACHE_LOG_DIR}/access.log combined \n\
+</VirtualHost>' > /etc/apache2/sites-available/joomla
 RUN a2ensite joomla
 RUN a2dissite 000-default
 
