@@ -117,12 +117,12 @@ RUN echo "deb http://archive.ubuntu.com/ubuntu precise main universe" > /etc/apt
 RUN easy_install supervisor
 
 # Create! --Add-- all config and start files
-RUN cat << EOF > /start.sh
+RUN cat << SEOF > /start.sh
 #!/bin/bash
 # Alternate method change user id of www-data to match file owner!
 chown -R www-data:www-data /data/www
 supervisord -n
-EOF
+SEOF
 
 RUN cat << EOF > /etc/supervisord.conf
 # /etc/supervisord.conf
