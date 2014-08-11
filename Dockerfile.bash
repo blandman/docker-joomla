@@ -55,7 +55,7 @@ ENV DOCKER_RUN docker run -d -volumes-from my-data-store -name my-site-db site-d
 ENV DEBIAN_FRONTEND noninteractive
 
 RUN echo "deb http://archive.ubuntu.com/ubuntu precise main universe" > /etc/apt/sources.list && \
-	apt-get update && \
+	apt-get update -y && \
 	apt-get upgrade -y && \
 	apt-get -y -q install wget logrotate
 
