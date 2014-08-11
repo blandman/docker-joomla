@@ -85,7 +85,7 @@ mysql -u root -e \
   "DELETE FROM mysql.user WHERE user="docker"; CREATE USER "docker"@"localhost" IDENTIFIED BY "docker"; GRANT ALL PRIVILEGES ON *.* TO 'docker'@'localhost' WITH GRANT OPTION; CREATE USER "docker""@"%" IDENTIFIED BY "docker"; GRANT ALL PRIVILEGES ON *.* TO "docker""@"%" WITH GRANT OPTION;" && \
   /etc/init.d/mysql stop
 SSEOF
-&& cat $STARTSH > start.sh
+&& cat $(START_SH) > start.sh
 
 RUN chmod +x /start.sh
 ENTRYPOINT ["/start.sh"]
