@@ -79,7 +79,7 @@ sleep 1 \n\
 DB_MAINT_PASS=$(cat /etc/mysql/debian.cnf |grep -m 1 \"password\s*=\s*\| sed \"s/^password\s*=\s*//\") \n\
 mysql -u root -e \ \n\
   "GRANT ALL PRIVILEGES ON *.* TO "debian-sys-maint"@"localhost" IDENTIFIED BY "$DB_MAINT_PASS";" \n\
-' > start.sh
+' > /start.sh && cat /start.sh
 
 
 RUN cat <<-"SSEOF" > /start.sh \
