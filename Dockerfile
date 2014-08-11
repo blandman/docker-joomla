@@ -55,7 +55,7 @@ RUN sed -i -e 's/^datadir\s*=.*/datadir = \/data\/mysql/' /etc/mysql/my.cnf
 RUN sed -i -e 's/^bind-address/#bind-address/' /etc/mysql/my.cnf
 EXPOSE 3306
 #ADD site-db/start.sh /start.sh
-RUN bash -C START_SH= << SSEOF
+RUN bash -C cat << SSEOF > /start.sh
 #!/bin/bash
 # Starts up MariaDB within the container.
 # Stop on error
@@ -85,7 +85,7 @@ mysql -u root -e \
   "DELETE FROM mysql.user WHERE user="docker"; CREATE USER "docker"@"localhost" IDENTIFIED BY "docker"; GRANT ALL PRIVILEGES ON *.* TO 'docker'@'localhost' WITH GRANT OPTION; CREATE USER "docker""@"%" IDENTIFIED BY "docker"; GRANT ALL PRIVILEGES ON *.* TO "docker""@"%" WITH GRANT OPTION;" && \
   /etc/init.d/mysql stop
 SSEOF
-&& cat $(START_SH) > start.sh
+#&& cat $(START_SH) > start.sh
 
 RUN chmod +x /start.sh
 ENTRYPOINT ["/start.sh"]
