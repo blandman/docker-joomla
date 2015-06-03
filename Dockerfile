@@ -95,7 +95,7 @@ RUN echo "deb http://archive.ubuntu.com/ubuntu precise main universe" > /etc/apt
 	apt-get update && \
 	apt-get -y upgrade && \
 	apt-get purge apache2 && \
-	apt-get -y install mysql-client apache2 apache2-mpm-prefork libapache2-mod-php5 pwgen python-setuptools vim-tiny php5-mysql openssh-server sudo php5-ldap unzip && \
+	apt-get -yf install mysql-client apache2 apache2-mpm-prefork libapache2-mod-php5 pwgen python-setuptools vim-tiny php5-mysql openssh-server sudo php5-ldap unzip && \
 	apt-get clean && \
 	rm -rf /var/lib/apt/lists/*
 RUN easy_install supervisor
