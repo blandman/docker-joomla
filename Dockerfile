@@ -14,7 +14,7 @@ RUN DEBIAN_FRONTEND="noninteractive" && \
 # Create data directories
 RUN mkdir -p /data/mysql /data/www
 
-RUN curl -G -o /data/joomla.zip http://joomlacode.org/gf/download/frsrelease/19239/158104/Joomla_3.2.3-Stable-Full_Package.zip && \
+RUN curl -G -o /data/joomla.zip https://github.com/joomla/joomla-cms/releases/download/3.4.1/Joomla_3.4.1-Stable-Full_Package.zip && \
 	unzip /data/joomla.zip -d /data/www && \
 	rm /data/joomla.zip
 
@@ -94,7 +94,8 @@ ENV DEBIAN_FRONTEND noninteractive
 RUN echo "deb http://archive.ubuntu.com/ubuntu precise main universe" > /etc/apt/sources.list && \
 	apt-get update && \
 	apt-get -y upgrade && \
-	apt-get -y install mysql-client apache2 libapache2-mod-php5 pwgen python-setuptools vim-tiny php5-mysql openssh-server sudo php5-ldap unzip && \
+	apt-get purge apache2 && \
+	apt-get -y install mysql-client apache2 apache2-mpm-prefork libapache2-mod-php5 pwgen python-setuptools vim-tiny php5-mysql openssh-server sudo php5-ldap unzip && \
 	apt-get clean && \
 	rm -rf /var/lib/apt/lists/*
 RUN easy_install supervisor
